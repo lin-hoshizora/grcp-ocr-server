@@ -194,10 +194,8 @@ class MainAnalyzer(AnalyzerBase):
     """
     num = self.info.get("SkkGetYmd", None)
     if num is not None: return
-    # print('skk',texts)
     for txt in texts:
       ret,text = skkget_match(txt[-1])
-      print(ret,text)
       if ret:
         skk=get_date(text)
         if skk:

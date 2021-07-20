@@ -59,8 +59,8 @@ def insurer_match(text: str) -> Tuple[bool, Union[str, None]]:
   text = re.sub(r"\d+\(\d+\)\d+", "", text)
   ret, matched = match_one(INSURER, text)
 
-  if ret:
-    print(matched)
+  # if ret:
+  #   print(matched)
 
   # check right side at first
   if matched and get_insurer_num(text[matched.span()[0]:]):

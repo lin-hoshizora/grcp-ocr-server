@@ -205,16 +205,18 @@ class InsuranceReader:
       A boolean indicating if the image is a 公費
     """
     # check keywords
-
+    print(self.is_portrait)
     if not self.is_portrait and ('兼高齢' in all_txt or '蒹高齢' in all_txt): return False
+    # print(all_txt)
     for w in KOUHI_WORDS:
+      # print(w)
       if len(w) < 4 and w in all_txt: return True
       if 4 <= len(w) <= 6 and fuzzy_match(w, all_txt): return True
       if len(w) > 6 and fuzzy_match(w, all_txt, e_max=3): return True
 
     # check insurer number
     hknjanum = self.prefetch_hknjanum()
-    if hknjanum.startswith('81') or hknjanum.startswith('82'): return True
+    if hknjanum.startswith('80') or hknjanum.startswith('81') or hknjanum.startswith('82'): return True
     return False
 
   def is_gendo(self, all_txt: str) -> bool:
@@ -328,9 +330,7 @@ class InsuranceReader:
     texts = clean_half_width(results)
     self.texts = texts
 
-    for line in texts:
-      print(" ".join(w[0] for w in line[:-1]))
-      print(line[-1])
+
 
     # categorize insurance
     syukbn = self.categorize(texts)

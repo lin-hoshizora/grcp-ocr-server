@@ -40,7 +40,6 @@ class WideFinder(yaml.YAMLObject):
 
   def extract(self, texts):
     self.scores, self.texts = score(self.mf, texts)
-    print(self.scores,self.mf)
     for idx in (-self.scores).argsort(kind="meregesort"):
       if self.scores[idx] == 0: break
       res = self.ef(self.texts[idx])
