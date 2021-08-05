@@ -22,7 +22,7 @@ class JgnGakFinder(yaml.YAMLObject):
   def _get_amount(self, line):
     limit = DEDUCTIBLE_AMT.findall(line[-1])
     if limit:
-      self.info['JgnGak'] = limit[0].replace('o', '0')
+      self.info['JgnGak'] = limit[0].replace('o', '0').replace('.','')
       if self.info['JgnGak'][0] == '0' and len(self.info["JgnGak"]) > 1:
         self.info['JgnGak'] = '1' + self.info['JgnGak']
       return self.info['JgnGak']

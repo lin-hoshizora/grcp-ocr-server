@@ -216,7 +216,7 @@ class InsuranceReader:
 
     # check insurer number
     hknjanum = self.prefetch_hknjanum()
-    if hknjanum.startswith('80') or hknjanum.startswith('81') or hknjanum.startswith('82'): return True
+    if hknjanum.startswith('80') or hknjanum.startswith('81') or hknjanum.startswith('82') or hknjanum.startswith('88') or hknjanum.startswith('38'): return True
     return False
 
   def is_gendo(self, all_txt: str) -> bool:

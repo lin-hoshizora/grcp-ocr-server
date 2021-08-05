@@ -196,13 +196,21 @@ class MainAnalyzer(AnalyzerBase):
     if num is not None: return
     for txt in texts:
       ret,text = skkget_match(txt[-1])
+      # print('199: ',ret,text)
       if ret:
         skk=get_date(text)
         if skk:
+          # if self.info.get('SkkGetYmd',None):
+          #   break
           self.info['SkkGetYmd'] = str(skk[0])
           print(skk)
           print(skk[0],self.info['SkkGetYmd'])
           print(str(skk[0]),str(self.info['SkkGetYmd']))
+    if self.info.get("SkkGetYmd", None):
+      pass
+    else:
+      self.info['SkkGetYmd'] = None
+    
 
   def _get_HonKzkKbn(self, texts: List[List[Any]]):
     key_words = ['家族', '被扶養者', '被保険者', '本人']
