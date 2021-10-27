@@ -203,9 +203,9 @@ class MainAnalyzer(AnalyzerBase):
           # if self.info.get('SkkGetYmd',None):
           #   break
           self.info['SkkGetYmd'] = str(skk[0])
-          print(skk)
-          print(skk[0],self.info['SkkGetYmd'])
-          print(str(skk[0]),str(self.info['SkkGetYmd']))
+          # print(skk)
+          # print(skk[0],self.info['SkkGetYmd'])
+          # print(str(skk[0]),str(self.info['SkkGetYmd']))
     if self.info.get("SkkGetYmd", None):
       pass
     else:
@@ -213,16 +213,25 @@ class MainAnalyzer(AnalyzerBase):
     
 
   def _get_HonKzkKbn(self, texts: List[List[Any]]):
-    key_words = ['家族', '被扶養者', '被保険者', '本人']
-    
+    key_words1 = ['家族', '被扶養者']
+    key_words2 = ['被保険者', '本人']
+#     print(len(self.info['HknjaNum']))    
+    if len(self.info['HknjaNum']) == 6 or str(self.info['HknjaNum'])[0:2]=='67' or str(self.info['HknjaNum'])[0:2]=='63':
+      self.info['HonKzkKbn'] = '本人'
+      return
     all_txt = ''
     for txt in texts:
       all_txt = all_txt + txt[-1]
-    for key_word in key_words:
+    for key_word in key_words1:
       if key_word in all_txt:
         print(key_word)
-        self.info['HonKzkKbn'] = key_word
-        break
+        self.info['HonKzkKbn'] = '家族'
+        return
+    for key_word in key_words2:
+      if key_word in all_txt:
+        print(key_word)
+        self.info['HonKzkKbn'] = '本人'
+        return
 
 
 

@@ -17,7 +17,8 @@ INSURER = re_compile([
     r"[^被]保(険者(番号|名称)){e<2}",
     r"^[^被]?保(険者(番号|名称)){e<2}",
     r"^\D\D者(番号|名称)",
-    r"(公費負){e<2}担(?!資)",
+    r"(公費負.*番号){e<2}",
+    # r"(公費負){e<2}担(?!資)",
     r"(負担者番号){e<2}",
     r"(機関名)",
 ])
@@ -28,6 +29,8 @@ KOHI_NUM = re_compile([
     r"受給者\D{,3}番号{e<2}",
     r"受給者\d",
     r"(記号番号){e<2}",
+    r"(公費番号){e<2}",
+    r"([^者]番号)"
 ])
 
 
@@ -101,7 +104,7 @@ DATE = re_compile({
 LAST_DAY = re.compile(r"[末未][日目]")
 
 
-INSURER_NUM = re.compile(r"\d{6,8}")
+INSURER_NUM = re.compile(r"[\d]{6,8}")
 
 
 ANY_NUM = re.compile(r"[\d-\pP]+")
