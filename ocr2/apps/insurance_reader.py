@@ -43,6 +43,31 @@ KOUREI_WORDS = [
     '髙齡',
 ]
 
+
+KOUHI_KEYWORDS = [
+    38,
+    41,
+    42,
+    43,
+    44,
+    47,
+    48,
+    58,
+    59,
+    68,
+    69,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    88
+]
+
+
+
 class InsuranceReader:
   """OCR-based reader for insurance card.
 
@@ -216,7 +241,10 @@ class InsuranceReader:
 
     # check insurer number
     hknjanum = self.prefetch_hknjanum()
-    if hknjanum.startswith('80') or hknjanum.startswith('81') or hknjanum.startswith('82') or hknjanum.startswith('88') or hknjanum.startswith('38'): return True
+    # if hknjanum.startswith('80') or hknjanum.startswith('81') or hknjanum.startswith('82') or hknjanum.startswith('88') or hknjanum.startswith('38'): return True
+    for key in KOUHI_KEYWORDS:
+      if hknjanum.startswith(str(key)):
+        return True
     return False
 
   def is_gendo(self, all_txt: str) -> bool:
