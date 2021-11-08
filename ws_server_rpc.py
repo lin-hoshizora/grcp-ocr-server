@@ -167,6 +167,7 @@ async def serve_ocr(websocket, path):
             res_json[meta_k][field] = reader.extract_info(field)
           if not isinstance(res_json[meta_k][field], dict):
             res_json[meta_k][field] = {'text': res_json[meta_k][field], 'confidence': 1.0}
+      res_json['CheckBirthday'] = True
       res_str = handle_res(res_json, info_save_path, logger)
       await websocket.send(res_str)
 

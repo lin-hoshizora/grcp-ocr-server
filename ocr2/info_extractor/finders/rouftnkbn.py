@@ -96,6 +96,7 @@ class RouFtnKbnFinder(yaml.YAMLObject):
               kbn = key_word
               break
           self.info['RouFtnKbn'] = kbn
+          
           break
 
         if idx_l > 0:
@@ -139,4 +140,6 @@ class RouFtnKbnFinder(yaml.YAMLObject):
             break
     if "RouFtnKbn" not in self.info:
       self.info["RouFtnKbn"] = None
+    if self.info.get('RouFtnKbn',None):
+      self.info["RouFtnKbn"] = self.info["RouFtnKbn"].replace('並み','')
     return self.info["RouFtnKbn"]
