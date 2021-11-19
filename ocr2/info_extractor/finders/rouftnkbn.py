@@ -142,4 +142,10 @@ class RouFtnKbnFinder(yaml.YAMLObject):
       self.info["RouFtnKbn"] = None
     if self.info.get('RouFtnKbn',None):
       self.info["RouFtnKbn"] = self.info["RouFtnKbn"].replace('並み','')
+      self.info["RouFtnKbn"] = self.info["RouFtnKbn"].replace('区分','低所')
+    if self.info.get('RouFtnKbn',None):
+      if self.info["RouFtnKbn"] == 'Ⅰ' or self.info["RouFtnKbn"] == 'ⅠⅠ' or self.info["RouFtnKbn"] == 'Ⅱ':
+        self.info["RouFtnKbn"]='低所'+self.info["RouFtnKbn"]  
+      
+    
     return self.info["RouFtnKbn"]
