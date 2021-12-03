@@ -120,21 +120,47 @@ DEDUCTIBLE_AMT = re.compile(r"([\do\pP]+)円")
 
 
 DEDUCTIBLE_WITH_TAG = [
-    re.compile(r"[入人]院([\do\pP]+)円"),
-    re.compile(r"[入人]院外([\do\pP]+)円"),
-    re.compile(r"外来([\do\pP]+)円"),
-    re.compile(r"通院([\do\pP]+)円"),
-    re.compile(r"調剤([\do\pP]+)円"),
+    re.compile(r"[入人]院.*?([\do\pP]+)円"),
+    re.compile(r"[入人]院.*?([\do\pP]+)割"),
+    re.compile(r"[入人]院外.*?([\do\pP]+)円"),
+    re.compile(r"[入人]院外.*?([\do\pP]+)割"),
+    re.compile(r"外[来來].*?([\do\pP]+)円"),
+    re.compile(r"外[来來].*?([\do\pP]+)割"),
+    re.compile(r"通院.*?([\do\pP]+)円"),
+    re.compile(r"通院.*?([\do\pP]+)割"),
+    re.compile(r"調剤.*?([\do\pP]+)円"),
+    re.compile(r"調剤.*?([\do\pP]+)割"),
 ]
 
 
 DEDUCTIBLE_TAGS = [
     "入院",
+    "(",
     "入院外",
+    "(",
     "外来",
+    "(",
     "通院",
+    "(",
     "調剤",
+    "(",
 ]
+
+DEDUCTIBLE_TAIL = [
+    "",
+    ")",
+    "",
+    ")",
+    "",
+    ")",
+    "",
+    ")",
+    "",
+    ")",
+]
+
+
+
 
 
 PERCENT_SINGLE_DIGIT = re.compile(r"(一部負担金){e<2}(\d)$")

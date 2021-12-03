@@ -1,7 +1,7 @@
 """A finder to extract 限度額 from OCR results"""
 from typing import List, Any, Union
 import yaml
-from ..re_pattern import DEDUCTIBLE_TAG, DEDUCTIBLE_AMT, DEDUCTIBLE_WITH_TAG, DEDUCTIBLE_TAGS
+from ..re_pattern import DEDUCTIBLE_TAG, DEDUCTIBLE_AMT, DEDUCTIBLE_WITH_TAG, DEDUCTIBLE_TAGS,DEDUCTIBLE_TAIL
 
 
 class JgnGakFinder(yaml.YAMLObject):
@@ -42,16 +42,28 @@ class JgnGakFinder(yaml.YAMLObject):
     """
     flags = [True for _ in range(len(DEDUCTIBLE_TAGS))]
     res = ""
+    
+
+
+
+
     for line in texts:
-      for idx, (tag, pattern, need) in enumerate(zip(
+      for idx, (tag, pattern, tail,need) in enumerate(zip(
           DEDUCTIBLE_TAGS,
           DEDUCTIBLE_WITH_TAG,
+          DEDUCTIBLE_TAIL,
           flags
       )):
         if not need: continue
         matched = pattern.findall(line[-1])
+        print(line[-1],matched)
         if matched and matched[0] is not None:
-          res += tag + " " + matched[0].replace('o', '0') + ";"
+          if tag == '(':
+            res = res[:-1]
+            res += tag + "" + matched[0].replace('o', '0').replace('.','') + tail +';'
+            pass
+          else:
+            res += tag + "" + matched[0].replace('o', '0').replace('.','') + tail +';'
           flags[idx] = False
     return res
 
@@ -68,6 +80,7 @@ class JgnGakFinder(yaml.YAMLObject):
     self.info = {}
 
     multi_res = self._get_multi(texts)
+
     if multi_res: return multi_res
 
     for line in texts:
