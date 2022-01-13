@@ -47,6 +47,8 @@ class KouhiAnalyzer(AnalyzerBase):
     self._handle_nums(texts)
     self._handle_kigo(texts)
     self._handle_multi_dates(texts)
+    self._check_RouFtnKbn_wari()
+    self._check_Kigo_with_nashi()
 
   def _handle_nums(self, texts: List[List[Any]]):
     """Handles hknjanum and num on the same line.
@@ -68,11 +70,14 @@ class KouhiAnalyzer(AnalyzerBase):
     # special handling for kigo
     if self._have("Kigo"): return
     self.info["Kigo"] = None
+
     for line in texts:
       for pattern in KIGO:
         match = pattern.findall(line[-1])
+        # print(75,match)
         if match and match[0] is not None:
           self.info["Kigo"] = match[0]
+
 
   def _handle_multi_dates(self, texts: List[List[Any]]):
     """Handles multiple dates.
@@ -110,3 +115,19 @@ class KouhiAnalyzer(AnalyzerBase):
     if new_st and new_ed:
       self.info["YukoStYmd"] = new_st
       self.info["YukoEdYmd"] = new_ed
+
+  def _check_RouFtnKbn_wari(self):
+    if self.info.get('RouFtnKbn',None):
+      if '割' in self.info['RouFtnKbn']:
+        self.info['RouFtnKbn']=None
+  def _check_Kigo_with_nashi(self):
+    keywords = [
+      '無',
+      'し',
+      'ノ',
+      '/',
+    ]
+    if self.info.get('Kigo',None):
+      for key in keywords:
+        if key in self.info['Kigo']:
+          self.info['Kigo'] = '無し'

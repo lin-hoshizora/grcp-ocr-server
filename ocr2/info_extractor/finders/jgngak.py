@@ -56,7 +56,7 @@ class JgnGakFinder(yaml.YAMLObject):
       )):
         if not need: continue
         matched = pattern.findall(line[-1])
-        print(line[-1],matched)
+        
         if matched and matched[0] is not None:
           if tag == '(':
             res = res[:-1]

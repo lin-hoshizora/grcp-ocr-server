@@ -6,6 +6,7 @@ from .finders import RouFtnKbnFinder, KigoNumFinder
 from .analyzer_base import AnalyzerBase
 from .extract import get_insurer_num, get_num, get_date
 from .match import skkget_match
+from .HknjaNum_list import HknjaNum_LIST
 
 
 def preprocess(texts: List[List[Any]]):
@@ -52,6 +53,7 @@ def preprocess(texts: List[List[Any]]):
 
     # add "枝番" for easier extraction if 番号 in the line, and the last box
     # has only 2 digits
+    print(56,len(line),line[-2][0])
     if (len(line) > 2 and len(line[-2][0]) == 2):
       texts[idx][-1] = line[-1][:-2] + "枝番" + line[-1][-2:]
       continue
@@ -63,7 +65,8 @@ def preprocess(texts: List[List[Any]]):
       pos_others = line[-2][2][:-2]
       inter_other_avg = pos_others[1:] - pos_others[:-1]
       space = positions[-2] - positions[-3]
-      if space > inter_other_avg.mean() * 2:
+      #2 -> 3
+      if space > inter_other_avg.mean() * 3:
         texts[idx][-1] = line[-1][:-2] + "枝番" + line[-1][-2:]
 
   return texts
@@ -117,6 +120,7 @@ class MainAnalyzer(AnalyzerBase):
       texts: OCR results in a list.
     """
     # handle 番号 123 番123
+    # print(1)
     if self._have("Branch"): return
     for line in texts:
       if "番号" not in line[-1]: continue
@@ -215,9 +219,40 @@ class MainAnalyzer(AnalyzerBase):
   def _get_HonKzkKbn(self, texts: List[List[Any]]):
     key_words1 = ['家族', '被扶養者']
     key_words2 = ['被保険者', '本人']
-#     print(len(self.info['HknjaNum']))    
-    if len(self.info['HknjaNum']) == 6 or str(self.info['HknjaNum'])[0:2]=='67' or str(self.info['HknjaNum'])[0:2]=='63':
-      self.info['HonKzkKbn'] = '本人'
+#     print(len(self.info['HknjaNum']))
+    if not self.info.get('HknjaNum',None):
+      return
+    all_txt = ''
+    for txt in texts:
+      all_txt = all_txt + txt[-1]
+    if len(self.info['HknjaNum']) == 6:
+      for key_word in key_words1:
+        if key_word in all_txt:
+          print(key_word)
+          self.info['HonKzkKbn'] = '家族'
+          return
+      for key_word in key_words2:
+        if key_word in all_txt:
+          print(key_word)
+          self.info['HonKzkKbn'] = '本人'
+          return
+    
+    if len(self.info['HknjaNum']) == 6 or str(self.info['HknjaNum'])[0:2]=='67':
+      name = re.compile(r'氏名')
+      name_p = re.compile(r'氏名([\D]*+)')
+      names = []
+      for i in texts:
+        status = name.search(i[-1])
+        print(status)
+        if status:
+          names.append(name_p.findall(i[-1])[0])
+      if len(names) == 2:
+        if names[0] == names[1]:
+          self.info['HonKzkKbn'] = '本人'
+        else:
+          self.info['HonKzkKbn'] = '家族'
+      else:
+        self.info['HonKzkKbn'] = '本人'
       return
     all_txt = ''
     for txt in texts:
@@ -232,6 +267,26 @@ class MainAnalyzer(AnalyzerBase):
         print(key_word)
         self.info['HonKzkKbn'] = '本人'
         return
+
+  def _check_HKB_with_list(self, texts: List[List[Any]]):
+    alltxts = "".join(i[-1] for i in texts)
+
+    for p in HknjaNum_LIST:
+      pp = re.compile(p)
+      if pp.search(alltxts):
+        self.info["HknjaNum"] = p
+  
+  def _check_Kigo_with_nashi(self):
+    keywords = [
+      '無',
+      'し',
+      'ノ',
+      '/',
+    ]
+    if self.info.get('Kigo',None):
+      for key in keywords:
+        if key in self.info['Kigo']:
+          self.info['Kigo'] = '無し'
 
 
 
@@ -250,3 +305,5 @@ class MainAnalyzer(AnalyzerBase):
     self._get_SkkGetYmd(texts)
     self._get_HonKzkKbn(texts)
     self._clean_kigo_num()
+    self._check_HKB_with_list(texts)
+    self._check_Kigo_with_nashi()

@@ -21,6 +21,7 @@ INSURER = re_compile([
     # r"(公費負){e<2}担(?!資)",
     r"(負担者番号){e<2}",
     r"(機関名)",
+    r"交付者{e<2}"
 ])
 
 
@@ -35,7 +36,7 @@ KOHI_NUM = re_compile([
 
 
 KIGO = re_compile([
-    r"記号(.+)番号",
+    r"記号([^・]+)番号",
     r"記号[^番]+$",
 ])
 
@@ -58,6 +59,7 @@ VALID_UNTIL = re_compile([
     r"有(効期限){e<2}",
     r"喪失予定日{e<2}",
     r"有効終了{e<2}",
+    r"有効年月日{e<2}",
 ])
 
 
@@ -113,10 +115,12 @@ ANY_NUM = re.compile(r"[\d-\pP]+")
 PURE_NUM = re.compile(r"\d+")
 
 
-DEDUCTIBLE_TAG = re.compile(r"(負担上限){e<3}")
+DEDUCTIBLE_TAG = re.compile(r"(負担)")
+# DEDUCTIBLE_TAG = re.compile(r"(負担上限){e<3}")
 
 
-DEDUCTIBLE_AMT = re.compile(r"([\do\pP]+)円")
+# DEDUCTIBLE_AMT = re.compile(r"([\do\pP]+)円")
+DEDUCTIBLE_AMT = re.compile(r"負担(.*+)")
 
 
 DEDUCTIBLE_WITH_TAG = [

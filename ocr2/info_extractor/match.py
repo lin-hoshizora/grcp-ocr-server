@@ -218,6 +218,7 @@ def branch_match(text: str) -> Tuple[bool, Union[str, None]]:
     >>> insurer_match("12345枝番6789")
     True 枝番6789
   """
+  
   ret, matched = match_one(BRANCH, text)
   text = text if matched is None else text[matched.span()[0]:]
   text = re.sub(r"番号\d+", "", text)
