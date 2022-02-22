@@ -1,14 +1,11 @@
 """Analyzer that extracts key information from OCR resutls of 主保険"""
-from pydoc import text
 from typing import List, Any
-from unicodedata import name
 import regex as re
 import numpy as np
 from .finders import RouFtnKbnFinder, KigoNumFinder
 from .analyzer_base import AnalyzerBase
 from .extract import get_insurer_num, get_num, get_date
 from .match import skkget_match
-from .HknjaNum_list import HknjaNum_LIST,HonKKEY,HonKKEY_FINDER,HknjaNum_no_1_LIST 
 
 
 def preprocess(texts: List[List[Any]]):
@@ -18,9 +15,7 @@ def preprocess(texts: List[List[Any]]):
     texts: OCR results in a list.
   """
   for idx, line in enumerate(texts):
-    reiwa = re.compile(r'(令?和|令和?)')
     texts[idx][-1] = line[-1].replace("令和年", "令和元年")
-    texts[idx][-1] = reiwa.sub('令和',line[-1])
 
   # remove repeating 1
   for idx, line in enumerate(texts):
@@ -57,24 +52,19 @@ def preprocess(texts: List[List[Any]]):
 
     # add "枝番" for easier extraction if 番号 in the line, and the last box
     # has only 2 digits
-    # print(56,len(line),line[-2][0])
     if (len(line) > 2 and len(line[-2][0]) == 2):
       texts[idx][-1] = line[-1][:-2] + "枝番" + line[-1][-2:]
       continue
 
     # add "枝番" for easier extraction if the last 2 chars in the last box
     # are digits and far away from other chars
-    try:
-      if len(line[-2][0]) >= 4:
-        positions = line[-2][2]
-        pos_others = line[-2][2][:-2]
-        inter_other_avg = pos_others[1:] - pos_others[:-1]
-        space = positions[-2] - positions[-3]
-        #2 -> 3
-        if space > inter_other_avg.mean() * 3:
-          texts[idx][-1] = line[-1][:-2] + "枝番" + line[-1][-2:]
-    except:
-      print('branch number preprocess')
+    if len(line[-2][0]) >= 4:
+      positions = line[-2][2]
+      pos_others = line[-2][2][:-2]
+      inter_other_avg = pos_others[1:] - pos_others[:-1]
+      space = positions[-2] - positions[-3]
+      if space > inter_other_avg.mean() * 2:
+        texts[idx][-1] = line[-1][:-2] + "枝番" + line[-1][-2:]
 
   return texts
 
@@ -120,30 +110,6 @@ class MainAnalyzer(AnalyzerBase):
     }
     super().__init__(config)
 
-  
-  def fit(self, texts: List[List[Any]]):
-    """Extracts key information from OCR results.
-
-    Args:
-      texts: OCR results in a list.
-    """
-    texts = preprocess(texts)
-    self._finder_fit(texts)
-    self._handle_hknjanum(texts)
-    self._trim_hknjanum(texts)
-    self._handle_branch(texts)
-    self._handle_kigo_num(texts)
-    self._get_SkkGetYmd(texts)
-    self._get_HonKzkKbn(texts)
-    self._clean_kigo_num()
-    self._check_HKB_with_list(texts)
-    self._check_Kigo_with_nashi()
-    self._check_SkkGetYmd_and_Num_with_hknjanum_(texts)
-    self._check_HKB_with_no_1_list(texts)
-    self._except_YukoEdYmd(texts)
-    self._check_oneLine_have_YukoEdYmd_YukoStYmd_(texts)
-
-
   def _handle_branch(self, texts: List[List[Any]]):
     """Fallback handling when the corresponding finder cannnot extract Branch.
 
@@ -151,7 +117,6 @@ class MainAnalyzer(AnalyzerBase):
       texts: OCR results in a list.
     """
     # handle 番号 123 番123
-    # print(1)
     if self._have("Branch"): return
     for line in texts:
       if "番号" not in line[-1]: continue
@@ -188,7 +153,7 @@ class MainAnalyzer(AnalyzerBase):
 
   def _handle_hknjanum(self, texts: List[List[Any]]):
     """Fallback handling when the corresponding finder cannnot extract HknjaNum.
-    
+
     Args:
       texts: OCR results in a list.
     """
@@ -229,23 +194,18 @@ class MainAnalyzer(AnalyzerBase):
     """
     num = self.info.get("SkkGetYmd", None)
     if num is not None: return
-
     for txt in texts:
-      
       ret,text = skkget_match(txt[-1])
       # print('199: ',ret,text)
       if ret:
-        status =  self._Check_two_data_in_one_line(text)
-        if status:
-          self.info['SkkGetYmd'] = str(min(int(status[0]),int(status[1])))
-          return
-          
         skk=get_date(text)
         if skk:
           # if self.info.get('SkkGetYmd',None):
           #   break
           self.info['SkkGetYmd'] = str(skk[0])
-
+          # print(skk)
+          # print(skk[0],self.info['SkkGetYmd'])
+          # print(str(skk[0]),str(self.info['SkkGetYmd']))
     if self.info.get("SkkGetYmd", None):
       pass
     else:
@@ -254,175 +214,39 @@ class MainAnalyzer(AnalyzerBase):
 
   def _get_HonKzkKbn(self, texts: List[List[Any]]):
     key_words1 = ['家族', '被扶養者']
-    key_words2 = ['本人']
-#     print(len(self.info['HknjaNum']))
-    if not self.info.get('HknjaNum',None):
+    key_words2 = ['被保険者', '本人']
+#     print(len(self.info['HknjaNum']))    
+    if len(self.info['HknjaNum']) == 6 or str(self.info['HknjaNum'])[0:2]=='67' or str(self.info['HknjaNum'])[0:2]=='63':
+      self.info['HonKzkKbn'] = '本人'
       return
     all_txt = ''
     for txt in texts:
       all_txt = all_txt + txt[-1]
     for key_word in key_words1:
       if key_word in all_txt:
+        print(key_word)
         self.info['HonKzkKbn'] = '家族'
         return
     for key_word in key_words2:
       if key_word in all_txt:
+        print(key_word)
         self.info['HonKzkKbn'] = '本人'
         return
-    Hkn2keta = [
-      '67',
-      '06',
-    ]
-    for num in Hkn2keta:
-      if len(self.info['HknjaNum']) == 6 or str(self.info['HknjaNum'])[0:2]==num:
-        names = set()
-        for i in texts:
-          for key,key_finder in zip(HonKKEY,HonKKEY_FINDER):
-            status = key.search(i[-1])
-            try:
-              if status:
-                names.add(key_finder.findall(i[-1])[0].replace('氏名','').replace('主',''))
-            except:
-              print('no find name')
-        names = list(names)
-        if len(names) == 1:
-          self.info['HonKzkKbn'] = '本人'
-          return
-        else:
-          self.info['HonKzkKbn'] = '家族'
-          return
-    self.info['HonKzkKbn'] = '本人'
-    return
 
 
-  def _check_HKB_with_list(self, texts: List[List[Any]]):
-    alltxts = "".join(i[-1] for i in texts)
-    delete_list=['(',')','ミ']
-    for t in delete_list:
-      alltxts = alltxts.replace(t,'')
-    for p in HknjaNum_LIST:
-      if len(p) > 7:
-        # pp = re.compile(p[:7].replace('1',''))
-        pp = re.compile(p[:7])
-      else:
-        # pp = re.compile(p.replace('1',''))
-        pp = re.compile(p)
-      if pp.search(alltxts):
-        self.info["HknjaNum"] = p
-        return
 
-  def _check_HKB_with_no_1_list(self, texts: List[List[Any]]):
-    if self.info.get("HknjaNum",None):
-      return
-    alltxts = "".join(i[-1] for i in texts)
-    delete_list=['1','(',')']
-    for t in delete_list:
-      alltxts = alltxts.replace(t,'')
-    for p in HknjaNum_no_1_LIST:
-      if len(p) > 7:
-        pp = re.compile(p[:7].replace('1',''))
-        # pp = re.compile(p[:7])
-      else:
-        pp = re.compile(p.replace('1',''))
-        # pp = re.compile(p)
-      if pp.search(alltxts):
-        self.info["HknjaNum"] = p
-        return
+  def fit(self, texts: List[List[Any]]):
+    """Extracts key information from OCR results.
 
-
-  def _check_Kigo_with_nashi(self):
-    keywords = [
-      '無',
-      'し',
-      'ノ',
-      '/',
-    ]
-    if self.info.get('Kigo',None):
-      for key in keywords:
-        if key in self.info['Kigo']:
-          self.info['Kigo'] = '無し'
-
-
-  def _check_SkkGetYmd_and_Num_with_hknjanum_(self,texts):
-    hkn = self.info.get("HknjaNum", None)
-    if not hkn:
-      return
-    if not hkn[:2] == '28':
-      return
-    print(352)
-    p = re.compile('注意?事?項{e<2}')
-    for line in texts:
-      if p.search(line[-1]):
-        try:
-          self.info['SkkGetYmd'] = get_date(line[-1])[0]
-        except:
-          self.info['SkkGetYmd'] = None
-    
-    p = re.compile('被保険者証(\d+)')
-    for line in texts:
-      if p.search(line[-1]):
-
-        try:
-          self.info['Num'] = p.findall(line[-1])[0]
-        except:
-          self.info['Num'] = None
-
-
-  def _except_YukoEdYmd(self,texts):
-    for line in texts:
-      text = line[-1]
-      if '有効' in text[-3:]:
-        if get_date(text):
-          self.info['YukoEdYmd'] = get_date(text)[0]
-          return
-    
-
-  def _check_oneLine_have_YukoEdYmd_YukoStYmd_(self,texts):
-    if self.info.get('YukoEdYmd', None) and self.info.get('YukoStYmd', None):
-      return
-
-    p = re.compile('年.+月.+日.+年.+月.+日')
-    for line in texts:
-      text = line[-1]
-      if p.search(text):
-        text = self._oneLine_have_YukoEdYmd_YukoStYmd_preprocess(text)
-        print(191,text)
-        date_p = re.compile('年.*?月.*?日')
-        try:
-          i = date_p.search(text).span()[1]
-          st = text[:i]
-          ed = text[i:]
-          print(321,st,ed)
-          self.info['YukoEdYmd'] = get_date(ed)[0]
-          self.info['YukoStYmd'] = get_date(st)[0]
-        except:
-          print('not two date')
-
-
-  def _oneLine_have_YukoEdYmd_YukoStYmd_preprocess(self,text):
-
-    reiwa = re.compile(r'(令?和|令和?)')
-    text = reiwa.sub('令和',text)
-    space_ni_reiwa = re.compile(r'[^(令和|平成|昭和|明治)](\d+)年')
-    if space_ni_reiwa.search(text):
-        idx = space_ni_reiwa.search(text).span()[0]
-        text = text[:idx+1] + '令和'+ text[idx+1:]
-    return text
-
-  
-  def _Check_two_data_in_one_line(self,text):
-    p = re.compile('年.+月.+日.+年.+月.+日')
-    if p.search(text):
-      date_p = re.compile('年.*?月.*?日')
-      try:
-        i = date_p.search(text).span()[1]
-        st = text[:i]
-        ed = text[i:]
-        print(369,st,ed)
-        print(get_date(ed)[0],get_date(st)[0])
-        return [str(get_date(ed)[0]),str(get_date(st)[0])]
-      except:
-        print('not two date')
-        return None
-    return None
-  
+    Args:
+      texts: OCR results in a list.
+    """
+    texts = preprocess(texts)
+    self._finder_fit(texts)
+    self._handle_hknjanum(texts)
+    self._trim_hknjanum(texts)
+    self._handle_branch(texts)
+    self._handle_kigo_num(texts)
+    self._get_SkkGetYmd(texts)
+    self._get_HonKzkKbn(texts)
+    self._clean_kigo_num()

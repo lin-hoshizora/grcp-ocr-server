@@ -50,6 +50,9 @@ def preprocess(texts: List[List[Any]]):
     if not line[-1][-2:].isdigit():
       continue
 
+
+
+
     # add "枝番" for easier extraction if 番号 in the line, and the last box
     # has only 2 digits
     if (len(line) > 2 and len(line[-2][0]) == 2):

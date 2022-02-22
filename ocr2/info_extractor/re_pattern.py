@@ -28,10 +28,11 @@ INSURER = re_compile([
 KOHI_NUM = re_compile([
     r"資格者\D{,3}番号{e<2}",
     r"受給者\D{,3}番号{e<2}",
-    r"受給者\d",
-    r"(記号番号){e<2}",
-    r"(公費番号){e<2}",
-    r"([^者]番号)"
+    r"受給(資格)?者\d",
+    r"(記号番号)",
+    r"(公費番号)",
+    r"(給者番号)",
+    # r"[^者]番号"
 ])
 
 
@@ -60,6 +61,7 @@ VALID_UNTIL = re_compile([
     r"喪失予定日{e<2}",
     r"有効終了{e<2}",
     r"有効年月日{e<2}",
+    
 ])
 
 
@@ -81,7 +83,7 @@ SKKGET = re_compile([
     r"取得年月日{e<2}",
     r"資格認定{e<2}",
     r"扶養認定日{e<2}",
-    r"適用開始{e<2}",
+    r"適用?開始{e<2}",
     r"適用開始年月日{e<2}",
     r"該当年月日{e<2}",
     r"定年月日{e<2}",
@@ -112,7 +114,7 @@ INSURER_NUM = re.compile(r"[\d]{6,8}")
 ANY_NUM = re.compile(r"[\d-\pP]+")
 
 
-PURE_NUM = re.compile(r"\d+")
+PURE_NUM = re.compile(r"[\d-]+")
 
 
 DEDUCTIBLE_TAG = re.compile(r"(負担)")
@@ -120,37 +122,44 @@ DEDUCTIBLE_TAG = re.compile(r"(負担)")
 
 
 # DEDUCTIBLE_AMT = re.compile(r"([\do\pP]+)円")
-DEDUCTIBLE_AMT = re.compile(r"負担(.*+)")
+DEDUCTIBLE_AMT = re.compile(r"負担.*?([^)(月額負担金上限額]+)[円割]")
+# DEDUCTIBLE_AMT = re.compile(r"(.*+)")
 
 
 DEDUCTIBLE_WITH_TAG = [
-    re.compile(r"[入人]院.*?([\do\pP]+)円"),
-    re.compile(r"[入人]院.*?([\do\pP]+)割"),
-    re.compile(r"[入人]院外.*?([\do\pP]+)円"),
-    re.compile(r"[入人]院外.*?([\do\pP]+)割"),
-    re.compile(r"外[来來].*?([\do\pP]+)円"),
-    re.compile(r"外[来來].*?([\do\pP]+)割"),
-    re.compile(r"通院.*?([\do\pP]+)円"),
-    re.compile(r"通院.*?([\do\pP]+)割"),
-    re.compile(r"調剤.*?([\do\pP]+)円"),
-    re.compile(r"調剤.*?([\do\pP]+)割"),
+    re.compile(r"[入人]院外.*?([\d]+円|なし)"),
+    re.compile(r"[入人]院外.*?([\d]+)割"),
+    re.compile(r"[入人]院.*?([\d]+円|なし)"),
+    re.compile(r"[入人]院.*?([\d]+)割"),
+    re.compile(r"[^入人通]?院.*?([\d]+)円"),
+    re.compile(r"[^入人通]?院.*?([\d]+)割"),
+    re.compile(r"外[来來].*?([\d]+円|なし)"),
+    re.compile(r"外[来來].*?([\d]+)割"),
+    re.compile(r"通院.*?([\d]+円|なし)"),
+    re.compile(r"通院.*?([\d]+)割"),
+    # re.compile(r"調剤.*?([\d]+円|なし)"),
+    # re.compile(r"調剤.*?([\d]+)割"),
 ]
 
 
 DEDUCTIBLE_TAGS = [
+    "外来",
+    "(",
     "入院",
     "(",
-    "入院外",
+    "入院",   
     "(",
     "外来",
     "(",
     "通院",
     "(",
-    "調剤",
-    "(",
+    # "調剤",
+    # "(",
 ]
 
 DEDUCTIBLE_TAIL = [
+    "",
+    ")",
     "",
     ")",
     "",
@@ -192,14 +201,19 @@ BRANCH = re_compile([
 
 # 記号・番号記号1001番号4214102
 KIGO_NUM = re_compile([
-    r"^.号([^番号]+)番号[^\d(]?([\d(][\d\pP]*)",
-    r"記.?号([^枝番号]+)番号?[^\d(]?([\d(][\d\pP]*)",
+    # r"^.号([^番号]+)番号[^\d(]?([\d(][\d\pP]*)",
+    r"^.号([^番号]+)番号[^\d(]?([\d(][\d]*)",
+    # r"記.?号([^枝番号]+)番号?[^\d(]?([\d(][\d\pP]*)",
+    r"記.?号([^枝番号]+)番号?([^\d(]?[\d(][\d\pP]*)",
     r"記\D?([\d\pP]+)[\D]*番号[^\d(]?([\d(][\d\pP]*)",
+    r".?号番号([^\d]+)([\d-]*)",
     r"記\D?番号[^\d(]?(\d+)[^\d枝番]+(\d+)",
     r"記\D?番号[^\d(]?(\d+)",
     r"被保険者番号\D*([\d(][\d\pP]*)",
     r"記\D?([a-zA-Z0-9]+)番号[^\d(]?([\d(][\d\pP]*)",
     r"^([\d-]+)番号[^\d(]?([\d(][\d\pP]*)",
+    r'記号(.+)番号(.*?)',
+    r".?号([^番号]+)番号[^\d(]?([\d(][\d\pP]*)",
 ])
 
 

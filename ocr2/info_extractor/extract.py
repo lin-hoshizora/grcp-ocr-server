@@ -1,5 +1,6 @@
 """Functions to extract an named entity from text"""
 from typing import Union, List, Any, Callable
+from numpy import piecewise
 import regex as re
 from .re_pattern import DATE, LAST_DAY, INSURER_NUM, PURE_NUM
 from .re_pattern import KIGO_NUM, KIGO_SINGLE, NUM_SINGLE
@@ -16,9 +17,10 @@ def extract_one(patterns: list, text: str) -> Union[Any, None]:
   Returns:
     Matched content if any, `None` otherwise
   """
+  
   for p in patterns:
-    # print(p)
     res = p.findall(text)
+    # print(21,text,p,res)
     if res is not None and res and res[0]:
       res = res[0]
       return res
@@ -104,6 +106,7 @@ def get_insurer_num(text: str) -> Union[str, None]:
   Returns:
     A string of insurer number. None if nothing can be extracted.
   """
+  text = text.replace('O','0').replace(')','').replace('(','')
   num = None
   if len(text) < 3:
     return num
@@ -135,7 +138,9 @@ def get_pure_num(text: str) -> Union[str, None]:
   Returns:
     A number string. `None` if no number can be extracted.
   """
+  
   matched = PURE_NUM.search(text)
+
   if matched is None:
     return matched
   return matched.group(0)
@@ -153,8 +158,7 @@ def get_kigo_num(text: str) -> Union[tuple, None]:
   """
   
   res = extract_one(KIGO_NUM, text)
-  # if res:
-  #   print(1,text)
+  
   return res
 
 

@@ -8,6 +8,14 @@ def preprocess(line):
   text = line[-1].replace('ー', '-').replace('一', '-')
   return text
 
+def check_is_nashi(line):
+  nashi_keyword = ['無','レ','ノ','し']
+  for key in nashi_keyword:
+    if key in line:
+      return '無し'
+  return line
+
+
 class KigoNumFinder(yaml.YAMLObject):
   """A finder class to extract 記号番号 from text lines output by OCR.
 
@@ -34,13 +42,24 @@ class KigoNumFinder(yaml.YAMLObject):
     self.info = {"Kigo": None, "Num": None}
     texts = list(map(preprocess, texts))
     # kigo num in the same line
+
+
     for text in texts:
       res = get_kigo_num(text)
+      print(res)
       if res is not None:
-        if isinstance(res, str): self.info["Num"] = res
+        if isinstance(res, str):
+          res = check_is_nashi(res)
+          self.info["Num"] = res
+
         if isinstance(res, tuple):
-          self.info["Kigo"] = res[0]
-          self.info["Num"] = res[1]
+          res_kigo = check_is_nashi(res[0])
+          self.info["Kigo"] = res_kigo
+          
+          if res[1]:
+            self.info["Num"] = res[1]
+          else:
+            self.info["Num"] = None
 
     if self.info["Num"] is not None: return self.info
 

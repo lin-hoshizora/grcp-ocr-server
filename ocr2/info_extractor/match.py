@@ -106,6 +106,7 @@ def valid_from_match(text: str) -> Tuple[bool, Union[str, None]]:
     >>> insurer_match("2021年12月12日有効開始日2021年1月1日")
     True 有効開始日2021年1月1日
   """
+  text = text.replace('カ','か').replace('・','')
   for keyword in ["まで", "迄"]:
     if keyword in text and len(get_date(text)) == 1:
       return False, text
@@ -140,6 +141,8 @@ def valid_until_match(text: str) -> Tuple[bool, Union[str, None]]:
     True 有効終了日2021年1月1日
   """
   text = UNTIL_FIX.sub(r"\g<1>有効", text)
+  text = text.replace('マ','で')
+  
   if not PERCENT.search(text):
     if "至" in text:
       return 2, text[text.index("至") + 1:]

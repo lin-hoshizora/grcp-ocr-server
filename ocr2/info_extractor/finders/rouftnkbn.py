@@ -145,4 +145,11 @@ class RouFtnKbnFinder(yaml.YAMLObject):
     if self.info.get('RouFtnKbn',None):
       if self.info["RouFtnKbn"] == 'Ⅰ' or self.info["RouFtnKbn"] == 'ⅠⅠ' or self.info["RouFtnKbn"] == 'Ⅱ':
         self.info["RouFtnKbn"]='低所'+self.info["RouFtnKbn"] 
+
+    ## mynumtouch patch
+    # if isinstance(self.info["RouFtnKbn"], str):
+    #   temp = self.info["RouFtnKbn"].replace('割','')
+    #   if temp.isdigit():
+    #     self.info["RouFtnKbn"]= '0'+temp+'0'
+        
     return self.info["RouFtnKbn"]

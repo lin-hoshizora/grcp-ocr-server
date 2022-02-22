@@ -9,7 +9,6 @@ import numpy as np
 from ..utils.image import get_rect, get_chips, rotate_if_necessary, merge, rotate
 from ..utils.general import group_lines
 from ..utils.text import fuzzy_match, clean_half_width
-import regex as re
 
 
 INSURANCE_WORDS = [
@@ -22,14 +21,10 @@ INSURANCE_WORDS = [
     '資格取得',
     '番号',
     '記号',
-    '年月日',
-    '年月日',
 ]
 
-
 KOUHI_WORDS = [
-    'こども医療費',
-    '受給者証',
+    '公費',
     'ひとり親',
     '子育て支援',
     '指定難病',
@@ -38,10 +33,8 @@ KOUHI_WORDS = [
 
 GENDO_WORDS = [
     '限度額認証',
-    '限度額適用',
-    '適用認定証',
+    '限度額適用'
 ]
-
 
 KOUREI_WORDS = [
     '高齢',
@@ -49,38 +42,6 @@ KOUREI_WORDS = [
     '高齡',
     '髙齡',
 ]
-
-
-KOUHI_KEYWORDS = [
-    38,
-    41,
-    42,
-    43,
-    44,
-    47,
-    48,
-    51,
-    52,
-    53,
-    54,
-    62,
-    66,
-    79,
-    58,
-    59,
-    68,
-    69,
-    80,
-    81,
-    82,
-    83,
-    84,
-    85,
-    86,
-    88,
-]
-
-
 
 class InsuranceReader:
   """OCR-based reader for insurance card.
@@ -255,10 +216,7 @@ class InsuranceReader:
 
     # check insurer number
     hknjanum = self.prefetch_hknjanum()
-    # if hknjanum.startswith('80') or hknjanum.startswith('81') or hknjanum.startswith('82') or hknjanum.startswith('88') or hknjanum.startswith('38'): return True
-    for key in KOUHI_KEYWORDS:
-      if hknjanum.startswith(str(key)):
-        return True
+    if hknjanum.startswith('80') or hknjanum.startswith('81') or hknjanum.startswith('82') or hknjanum.startswith('88') or hknjanum.startswith('38'): return True
     return False
 
   def is_gendo(self, all_txt: str) -> bool:
@@ -304,7 +262,6 @@ class InsuranceReader:
       self.logger.warning('No text detected, categorized as Unknown')
       return False
     all_txt = ''.join([w[0] for line in texts for w in line if len(w) > 1])
-    # print(303,all_txt)
     if not sum([w in all_txt for w in INSURANCE_WORDS]) > 1:
       self.logger.warning('No isnurance key word found, categorized as Unknown')
       return False
@@ -320,10 +277,6 @@ class InsuranceReader:
       A string indicating 主区分
     """
     all_txt = ''.join([line[-1] for line in texts])
-    all_txt = re.sub('[高髙][齢齡]者施設','',all_txt)
-    
-    if fuzzy_match('高齢受給者証発効期日', all_txt): return '主保険'
-
     if '介護' in all_txt:
       self.logger.warning('kaigo detected, categorized as Unknown')
       return 'Unknown'
@@ -361,7 +314,6 @@ class InsuranceReader:
     for rot in rotations:
       if rot is not None: img = cv2.rotate(img, rot)
       results = self.read_page_sync(img)
-      # print(results)
       # handle error
       if isinstance(results, dict): return results
       # check if a valid insurance based OCR results
@@ -379,13 +331,13 @@ class InsuranceReader:
     self.texts = texts
 
 
+
     # categorize insurance
     syukbn = self.categorize(texts)
     self.syukbn = syukbn
 
     # extract info
     if syukbn not in self.analyzers: return syukbn
-
     self.analyzers[syukbn].fit(texts)
     self.info = self.analyzers[syukbn].info
 

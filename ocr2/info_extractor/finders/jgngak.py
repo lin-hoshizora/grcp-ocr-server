@@ -1,8 +1,10 @@
 """A finder to extract 限度額 from OCR results"""
 from typing import List, Any, Union
+#from matplotlib.image import imread
 import yaml
 from ..re_pattern import DEDUCTIBLE_TAG, DEDUCTIBLE_AMT, DEDUCTIBLE_WITH_TAG, DEDUCTIBLE_TAGS,DEDUCTIBLE_TAIL
 
+import regex as re
 
 class JgnGakFinder(yaml.YAMLObject):
   """A finder class to extract 限度額 from text lines output by OCR.
@@ -43,10 +45,6 @@ class JgnGakFinder(yaml.YAMLObject):
     flags = [True for _ in range(len(DEDUCTIBLE_TAGS))]
     res = ""
     
-
-
-
-
     for line in texts:
       for idx, (tag, pattern, tail,need) in enumerate(zip(
           DEDUCTIBLE_TAGS,
@@ -54,17 +52,26 @@ class JgnGakFinder(yaml.YAMLObject):
           DEDUCTIBLE_TAIL,
           flags
       )):
+        line[-1]  = line[-1].replace('.','').replace('・','')
         if not need: continue
         matched = pattern.findall(line[-1])
-        
         if matched and matched[0] is not None:
-          if tag == '(':
+          if type(matched[0]) == tuple:
+            if matched[0][0] == '院':
+              res += tag + "" + matched[0][1] + tail +';'  
+            continue
+
+          if tag == '(' and res[-2]!=')':
             res = res[:-1]
-            res += tag + "" + matched[0].replace('o', '0').replace('.','') + tail +';'
+            res += tag + "" + matched[0].replace('o', '0').replace('.','').replace('・','').replace('円','').replace('なし','0') + tail +';'
+            pass
+          elif tag in res:
             pass
           else:
-            res += tag + "" + matched[0].replace('o', '0').replace('.','') + tail +';'
+            res += tag + "" + matched[0].replace('o', '0').replace('.','').replace('・','').replace('円','').replace('なし','0') + tail +';'
           flags[idx] = False
+        
+      
     return res
 
   def extract(self, texts: List[List[Any]]) -> Union[str, None]:
@@ -92,6 +99,13 @@ class JgnGakFinder(yaml.YAMLObject):
     for line in texts:
       amount = self._get_amount(line)
       if amount: return amount
+    
+    
+    p = re.compile(r'負担金なし{e<2}')
+    for line in texts:
+      if p.search(line[-1]):
+        print('JgnGak not found. search 負担金なし')
+        return '外来0;入院0;'
 
     if "JgnGak" not in self.info:
       self.info["JgnGak"] = None

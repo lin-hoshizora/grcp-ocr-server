@@ -32,7 +32,9 @@ class SimpleFinder(yaml.YAMLObject):
     self.ef = getattr(e, extract_method)
 
   def match_one(self, texts):
+    print(32,self.mf)
     for line in texts:
+      print(36,line[-1])
       ret, text = self.mf(line[-1])
       if ret:
         return text
@@ -40,7 +42,9 @@ class SimpleFinder(yaml.YAMLObject):
 
   def extract(self, texts):
     text = self.match_one(texts)
+    print(43,text)
     if text is not None:
       res = self.ef(text)
+      print(47,res)
       return res
     return None
